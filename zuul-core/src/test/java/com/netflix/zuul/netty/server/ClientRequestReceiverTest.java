@@ -290,12 +290,10 @@ class ClientRequestReceiverTest {
 
         HttpRequestMessage request = ClientRequestReceiver.getRequestFromChannel(channel);
         SessionContext context = request.getContext();
-        assertThat(context.shouldSendErrorResponse()).isTrue();
-        assertThat(context.getError().getMessage()).isEqualTo("Invalid URI");
+        assertThat(context.containsKey("bad_uri")).isTrue();
         assertThat(StatusCategoryUtils.getStatusCategory(context))
                 .isEqualTo(ZuulStatusCategory.FAILURE_CLIENT_BAD_REQUEST);
-        assertThat(StatusCategoryUtils.getStatusCategoryReason(context))
-                .isEqualTo("Invalid request provided: Bad URI");
+        assertThat(StatusCategoryUtils.getStatusCategoryReason(context)).isEqualTo("Invalid request provided: Bad URI");
         // Raw URI preserved for access logging, not replaced with a placeholder.
         assertThat(request.getPath()).isEqualTo("/{invalid}");
     }
@@ -323,12 +321,10 @@ class ClientRequestReceiverTest {
 
         HttpRequestMessage request = ClientRequestReceiver.getRequestFromChannel(channel);
         SessionContext context = request.getContext();
-        assertThat(context.shouldSendErrorResponse()).isTrue();
-        assertThat(context.getError().getMessage()).isEqualTo("Invalid URI");
+        assertThat(context.containsKey("bad_uri")).isTrue();
         assertThat(StatusCategoryUtils.getStatusCategory(context))
                 .isEqualTo(ZuulStatusCategory.FAILURE_CLIENT_BAD_REQUEST);
-        assertThat(StatusCategoryUtils.getStatusCategoryReason(context))
-                .isEqualTo("Invalid request provided: Bad URI");
+        assertThat(StatusCategoryUtils.getStatusCategoryReason(context)).isEqualTo("Invalid request provided: Bad URI");
     }
 
     @Test

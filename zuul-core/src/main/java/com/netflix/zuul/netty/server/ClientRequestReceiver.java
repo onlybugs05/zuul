@@ -73,6 +73,7 @@ import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import javax.net.ssl.SSLException;
@@ -93,6 +94,7 @@ public class ClientRequestReceiver extends ChannelDuplexHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ClientRequestReceiver.class);
     private static final String SCHEME_HTTP = "http";
     private static final String SCHEME_HTTPS = "https";
+    private static final String BAD_URI = "bad_uri";
 
     private final SessionContextDecorator decorator;
 
@@ -151,6 +153,27 @@ public class ClientRequestReceiver extends ChannelDuplexHandler {
                         "Invalid request provided: Decode failure");
                 RejectionUtils.rejectByClosingConnection(
                         ctx, ZuulStatusCategory.FAILURE_CLIENT_BAD_REQUEST, "decodefailure", clientRequest, null);
+                return;
+            } else if (zuulRequest.getContext().containsKey(BAD_URI)) {
+                String clientIp = Objects.requireNonNullElse(getClientIp(ctx.channel()), "unknown");
+                LOG.warn(
+                        "Invalid URI in request. clientRequest = {}, clientIp = {}, info = {}",
+                        clientRequest,
+                        clientIp,
+                        ChannelUtils.channelInfoForLogging(ctx.channel()));
+                StatusCategoryUtils.setStatusCategory(
+                        zuulRequest.getContext(),
+                        ZuulStatusCategory.FAILURE_CLIENT_BAD_REQUEST,
+                        "Invalid request provided: Bad URI");
+                RejectionUtils.sendRejectionResponse(
+                        ctx,
+                        ZuulStatusCategory.FAILURE_CLIENT_BAD_REQUEST,
+                        "invaliduri",
+                        clientRequest,
+                        null,
+                        HttpResponseStatus.BAD_REQUEST,
+                        "Invalid URI",
+                        Map.of());
                 return;
             } else if (zuulRequest.hasBody() && zuulRequest.getBodyLength() > zuulRequest.getMaxBodySize()) {
                 String errorMsg = "Request too large. "
@@ -361,20 +384,8 @@ public class ClientRequestReceiver extends ChannelDuplexHandler {
         try {
             path = parsePath(nativeRequest.uri());
         } catch (URISyntaxException ex) {
-            LOG.warn(
-                    "Invalid URI in request. clientRequest = {}, clientIp = {}, info = {}",
-                    nativeRequest,
-                    clientIp,
-                    ChannelUtils.channelInfoForLogging(clientCtx.channel()),
-                    ex);
-            // Used for storeInboundRequest
             path = nativeRequest.uri();
-            ZuulException ze = new ZuulException("Invalid URI");
-            ze.setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
-            StatusCategoryUtils.setStatusCategory(
-                    context, ZuulStatusCategory.FAILURE_CLIENT_BAD_REQUEST, "Invalid request provided: Bad URI");
-            context.setError(ze);
-            context.setShouldSendErrorResponse(true);
+            context.set(BAD_URI, true);
         }
 
         // Setup the req/resp message objects.
