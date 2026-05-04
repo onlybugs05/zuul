@@ -433,7 +433,7 @@ public class ClientRequestReceiver extends ChannelDuplexHandler {
     }
 
     private String parsePath(String uri) throws URISyntaxException {
-        URI uriObject = new URI(uri);
+        URI uriObject = new URI(uri.replace("^", "%5E"));
         if (uriObject.isOpaque()) {
             // If we have an opaque URI, match existing behavior of using the URI as the path.
             return uri;
