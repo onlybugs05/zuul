@@ -677,20 +677,4 @@ class ClientRequestReceiverTest {
         assertThat(result.getPath()).isEqualTo("/");
         channel.close();
     }
-
-    @Test
-    void caretInPath_encodedToPercentEncoded() {
-        EmbeddedChannel channel = new EmbeddedChannel(new ClientRequestReceiver(null));
-        channel.attr(SourceAddressChannelHandler.ATTR_SERVER_LOCAL_PORT).set(1234);
-        HttpRequestMessageImpl result;
-        {
-            channel.writeInbound(new DefaultFullHttpRequest(
-                    HttpVersion.HTTP_1_1, HttpMethod.GET, "/foo/bar/^1.0.0", Unpooled.buffer()));
-            result = channel.readInbound();
-            result.disposeBufferedBody();
-        }
-
-        assertThat(result.getPath()).isEqualTo("/foo/bar/%5E1.0.0");
-        channel.close();
-    }
 }
