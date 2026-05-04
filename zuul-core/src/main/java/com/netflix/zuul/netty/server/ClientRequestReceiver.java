@@ -439,17 +439,23 @@ public class ClientRequestReceiver extends ChannelDuplexHandler {
             return uri;
         }
         String rawPath = uriObject.getRawPath();
-        // RFC 3986 §2.4: %2E ≡ '.' is unreserved and may be folded any time.
-        // Reserved octets (%2F, %25, etc.) stay encoded so segment boundaries match what the client sent.
+        // Mirrors Envoy's REJECT_REQUEST
+        // https://github.com/envoyproxy/envoy/blob/main/source/extensions/http/header_validators/envoy_default/path_normalizer.cc#L91
+        if (containsEncodedSlash(rawPath)) {
+            throw new URISyntaxException(uri, "encoded slash in path");
+        }
+        // Fold %2E → '.' (unreserved per RFC 3986 §2.4) so normalize() can remove dot-segments.
         String prepared = rawPath.replace("%2e", ".").replace("%2E", ".");
-        // Single-arg constructor parses (does not re-encode), preserving percent-triplets per §2.4.
-        // normalize() then runs §5.2.4 dot-segment removal on the encoded form.
         String normalized = new URI(prepared).normalize().getRawPath();
-        // Strip leading /.. that Java's normalize() preserves but RFC 3986 §5.2.4 discards.
+        // RFC 3986 §5.2.4 discards leading "/..", but Java preserves it for relative paths.
         while (normalized.startsWith("/..")) {
             normalized = normalized.substring(3);
         }
         return normalized;
+    }
+
+    private static boolean containsEncodedSlash(String rawPath) {
+        return rawPath.contains("%2F") || rawPath.contains("%2f");
     }
 
     private static Headers copyHeaders(HttpRequest req) {

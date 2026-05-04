@@ -49,6 +49,8 @@ import java.util.List;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -594,14 +596,15 @@ class ClientRequestReceiverTest {
         channel.close();
     }
 
-    @Test
-    void pathTraversal_encodedDotDot() {
+    @ParameterizedTest
+    @ValueSource(strings = {"/public/%2e%2e/admin/", "/public/%2E%2E/admin/"})
+    void pathTraversal_encodedDotDot(String uri) {
         EmbeddedChannel channel = new EmbeddedChannel(new ClientRequestReceiver(null));
         channel.attr(SourceAddressChannelHandler.ATTR_SERVER_LOCAL_PORT).set(1234);
         HttpRequestMessageImpl result;
         {
-            channel.writeInbound(new DefaultFullHttpRequest(
-                    HttpVersion.HTTP_1_1, HttpMethod.GET, "/public/%2e%2e/admin/", Unpooled.buffer()));
+            channel.writeInbound(
+                    new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri, Unpooled.buffer()));
             result = channel.readInbound();
             result.disposeBufferedBody();
         }
@@ -610,20 +613,21 @@ class ClientRequestReceiverTest {
         channel.close();
     }
 
-    @Test
-    void pathTraversal_encodedDotDotMixedCase() {
+    @ParameterizedTest
+    @ValueSource(strings = {"/public/%2F../secret", "/public/%2f../secret"})
+    void encodedSlash_rejected(String uri) {
         EmbeddedChannel channel = new EmbeddedChannel(new ClientRequestReceiver(null));
         channel.attr(SourceAddressChannelHandler.ATTR_SERVER_LOCAL_PORT).set(1234);
-        HttpRequestMessageImpl result;
-        {
-            channel.writeInbound(new DefaultFullHttpRequest(
-                    HttpVersion.HTTP_1_1, HttpMethod.GET, "/public/%2E%2E/admin/", Unpooled.buffer()));
-            result = channel.readInbound();
-            result.disposeBufferedBody();
-        }
-
-        assertThat(result.getPath()).isEqualTo("/admin/");
+        channel.writeInbound(new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri, Unpooled.buffer()));
+        channel.readInbound();
         channel.close();
+
+        SessionContext context =
+                ClientRequestReceiver.getRequestFromChannel(channel).getContext();
+        assertThat(context.containsKey("bad_uri")).isTrue();
+        assertThat(StatusCategoryUtils.getStatusCategory(context))
+                .isEqualTo(ZuulStatusCategory.FAILURE_CLIENT_BAD_REQUEST);
+        assertThat(StatusCategoryUtils.getStatusCategoryReason(context)).isEqualTo("Invalid request provided: Bad URI");
     }
 
     @Test

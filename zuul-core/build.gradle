@@ -40,17 +40,14 @@ dependencies {
     api "io.netty:netty-transport"
 
     implementation "io.netty:netty-codec-haproxy"
-    implementation (group: "io.netty", "name": "netty-transport-native-epoll", "classifier": "linux-x86_64")
-    implementation (group: "io.netty", "name": "netty-transport-native-io_uring", "classifier": "linux-x86_64")
-    implementation (group: "io.netty", "name": "netty-transport-native-kqueue", "classifier": "osx-x86_64")
+    implementation "io.netty:netty-transport-native-epoll::linux-x86_64"
+    implementation "io.netty:netty-transport-native-io_uring::linux-x86_64"
+    implementation "io.netty:netty-transport-native-kqueue::osx-x86_64"
 
-    // We are using the long-form dependency syntax here because we want to
-    // explicitly set the classifier. We do not have the version number so we can't use
-    // Gradle's short-form dependency notation.
-    runtimeOnly( group: "io.netty", name: "netty-tcnative-boringssl-static", classifier: "linux-x86_64" )
-    runtimeOnly( group: "io.netty", name: "netty-tcnative-boringssl-static", classifier: "linux-aarch_64" )
-    runtimeOnly( group: "io.netty", name: "netty-tcnative-boringssl-static", classifier: "osx-x86_64" )
-    runtimeOnly( group: "io.netty", name: "netty-tcnative-boringssl-static", classifier: "osx-aarch_64" )
+    runtimeOnly "io.netty:netty-tcnative-boringssl-static::linux-x86_64"
+    runtimeOnly "io.netty:netty-tcnative-boringssl-static::linux-aarch_64"
+    runtimeOnly "io.netty:netty-tcnative-boringssl-static::osx-x86_64"
+    runtimeOnly "io.netty:netty-tcnative-boringssl-static::osx-aarch_64"
 
     implementation 'io.perfmark:perfmark-api:0.27.0'
     api 'jakarta.inject:jakarta.inject-api:2.0.1'
