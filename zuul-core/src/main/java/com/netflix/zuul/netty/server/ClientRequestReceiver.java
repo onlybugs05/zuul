@@ -438,10 +438,14 @@ public class ClientRequestReceiver extends ChannelDuplexHandler {
             // If we have an opaque URI, match existing behavior of using the URI as the path.
             return uri;
         }
-        // getPath() decodes %2e%2e → .. before normalize; also strips query naturally
-        // https://datatracker.ietf.org/doc/html/rfc3986#section-2.4
-        String decodedPath = uriObject.getPath();
-        String normalized = new URI(null, null, decodedPath, null).normalize().getRawPath();
+        String rawPath = uriObject.getRawPath();
+        // RFC 3986 §2.4: %2E ≡ '.' is unreserved and may be folded any time.
+        // Reserved octets (%2F, %25, etc.) stay encoded so segment boundaries match what the client sent.
+        String prepared = rawPath.replace("%2e", ".").replace("%2E", ".");
+        // Single-arg constructor parses (does not re-encode), preserving percent-triplets per §2.4.
+        // normalize() then runs §5.2.4 dot-segment removal on the encoded form.
+        String normalized = new URI(prepared).normalize().getRawPath();
+        // Strip leading /.. that Java's normalize() preserves but RFC 3986 §5.2.4 discards.
         while (normalized.startsWith("/..")) {
             normalized = normalized.substring(3);
         }
