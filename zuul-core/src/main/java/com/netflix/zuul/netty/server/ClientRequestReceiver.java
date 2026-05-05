@@ -432,7 +432,7 @@ public class ClientRequestReceiver extends ChannelDuplexHandler {
         return channel.attr(SourceAddressChannelHandler.ATTR_SOURCE_ADDRESS).get();
     }
 
-    private String parsePath(String uri) throws URISyntaxException {
+    protected String parsePath(String uri) throws URISyntaxException {
         URI uriObject = new URI(uri);
         if (uriObject.isOpaque()) {
             // If we have an opaque URI, match existing behavior of using the URI as the path.
