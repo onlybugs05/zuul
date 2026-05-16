@@ -31,7 +31,7 @@ An attacker can forge `userAuthCookie` and impersonate arbitrary users on push c
 
 ## 2) X-Forwarded-* trust bypass through host blacklist exact-match check
 - **CWE:** CWE-807 (Reliance on Untrusted Inputs in a Security Decision)
-- **CVSS v3.1:** **7.3** (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N)
+- **CVSS v3.1:** **7.5** (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N)
 - **Affected file:** `/home/runner/work/zuul/zuul/zuul-core/src/main/java/com/netflix/netty/common/proxyprotocol/StripUntrustedProxyHeadersHandler.java`
 
 ### Evidence
@@ -61,7 +61,7 @@ Actual behavior: blacklist comparison fails (`api.example.com` != `api.example.c
 
 ## 3) Deprecated/insecure TLS protocol versions enabled in sample SSL configuration
 - **CWE:** CWE-757 (Selection of Less-Secure Algorithm During Negotiation)
-- **CVSS v3.1:** **5.3** (AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N)
+- **CVSS v3.1:** **5.9** (AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N)
 - **Affected file:** `/home/runner/work/zuul/zuul/zuul-sample/src/main/java/com/netflix/zuul/sample/SampleServerStartup.java`
 
 ### Evidence
