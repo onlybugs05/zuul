@@ -15,7 +15,7 @@
 | Free trials | TBD | TBD |
 | Home Location Mis-detection | TBD | TBD |
 | Borrower VPN bypass | TBD | TBD |
-| Same Site Scripting | TBD | TBD |
+| Cross-Site Scripting (XSS) | TBD | TBD |
 | Physical Testing | TBD | TBD |
 | Social Engineering | TBD | TBD |
 | Phishing | TBD | TBD |
@@ -41,4 +41,3 @@
 | Vulnerability reports relating to sites or network devices not owned by Netflix | TBD | TBD |
 | Reports requiring large user cooperation or unreasonable actions (social engineering/phishing-like flows) | TBD | TBD |
 | Device & Content Authorization: vulnerabilities from already publicly broken protocols (e.g. HDCP v1.4) | TBD | TBD |
-
