@@ -49,6 +49,7 @@ public class StripUntrustedProxyHeadersHandler extends ChannelInboundHandlerAdap
 
     private static final Collection<AsciiString> HEADERS_TO_STRIP = Sets.newHashSet(
             new AsciiString("x-forwarded-for"),
+            new AsciiString("x-forwarded-host"),
             new AsciiString("x-forwarded-port"),
             new AsciiString("x-forwarded-proto"),
             new AsciiString("x-forwarded-proto-version"),
@@ -103,8 +104,27 @@ public class StripUntrustedProxyHeadersHandler extends ChannelInboundHandlerAdap
 
     @VisibleForTesting
     void checkBlacklist(HttpRequest req, List<String> blacklist) {
-        // blacklist headers from
-        if (blacklist.stream().anyMatch(h -> h.equalsIgnoreCase(req.headers().get(HttpHeaderNames.HOST)))) {
+        // Canonicalize the Host header before comparing against the blacklist so that
+        // host variants with an explicit port (e.g. "api.example.com:443") and IPv6
+        // literals (e.g. "[::1]:8080") are normalized to just the host part.
+        String host = req.headers().get(HttpHeaderNames.HOST);
+        if (host != null) {
+            if (host.startsWith("[")) {
+                // IPv6 literal: strip everything after the closing bracket
+                int closingBracket = host.indexOf(']');
+                if (closingBracket != -1) {
+                    host = host.substring(0, closingBracket + 1);
+                }
+            } else {
+                // IPv4 / hostname: strip optional ":port" suffix
+                int colonIdx = host.lastIndexOf(':');
+                if (colonIdx != -1) {
+                    host = host.substring(0, colonIdx);
+                }
+            }
+        }
+        final String normalizedHost = host;
+        if (blacklist.stream().anyMatch(h -> h.equalsIgnoreCase(normalizedHost))) {
             stripXFFHeaders(req);
         }
     }
